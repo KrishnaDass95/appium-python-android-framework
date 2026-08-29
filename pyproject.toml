@@ -1,0 +1,30 @@
+[project]
+name = "appium-android-portfolio"
+version = "0.1.0"
+description = "Appium demo app practice"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "appium-python-client>=4.3",
+    "selenium>=4.21",
+]
+
+[dependency-groups]
+  dev = [
+      "pytest>=8.3",
+      "allure-pytest>=2.13",
+      "pydantic-settings>=2.3",
+      "pytest-xdist>=3.6",
+      "ruff>=0.4",
+      "mypy>=1.10",
+      "pre-commit>=3.7",
+  ]
+
+[tool.pytest.ini_options]
+  testpaths = ["tests"]
+  addopts = "-v --tb=short"
+  markers = [
+      "smoke: core happy-path tests",
+      "regression: extended coverage tests",
+  ]
+
