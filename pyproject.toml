@@ -5,7 +5,7 @@ description = "Appium demo app practice"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "appium-python-client>=4.3",
+    "appium-python-client>=4.4",
     "selenium>=4.21",
 ]
 

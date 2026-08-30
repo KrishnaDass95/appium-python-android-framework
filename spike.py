@@ -1,16 +1,11 @@
 from appium import webdriver
 
-caps = {
-    "platformName": "Android",
-    "appium:automationName": "UiAutomator2",
-    "appium:deviceName": "emulator-5554",
-    "appium:appPackage": "com.saucelabs.mydemoapp.rn",
-    "appium:appActivity": ".MainActivity",
-    "appium:noReset": True,
-}
+from config.settings import settings
 
-driver = webdriver.Remote("http://127.0.0.1:4723", caps)
+driver = webdriver.Remote(
+    settings.appium_server_url, options=settings.appium.to_appium_options()
+)
+
 
 print(driver.current_activity)
-
 driver.quit()
