@@ -8,10 +8,11 @@ class AppiumCapabilities(BaseModel):
     platform_name: str = "Android"
     automation_name: str = "UiAutomator2"
     device_name: str = "emulator-5554"
-    app_package: str
-    app_activity: str
-    app_wait_activity: str
-    no_reset: bool = True
+    app: str
+    app_package: str = "com.saucelabs.mydemoapp.android"
+    app_activity: str = "com.saucelabs.mydemoapp.android.view.activities.SplashActivity"
+    app_wait_activity: str = "com.saucelabs.mydemoapp.android.*"
+    no_reset: bool = False
     new_command_timeout: int = 600
 
     def to_appium_options(self):
@@ -19,6 +20,7 @@ class AppiumCapabilities(BaseModel):
         options.platform_name = self.platform_name
         options.automation_name = self.automation_name
         options.device_name = self.device_name
+        options.app = self.app
         options.app_package = self.app_package
         options.app_activity = self.app_activity
         options.app_wait_activity = self.app_wait_activity
@@ -29,9 +31,7 @@ class AppiumCapabilities(BaseModel):
 
 def create_default_caps():
     return AppiumCapabilities(
-        app_package="com.saucelabs.mydemoapp.android",
-        app_activity="com.saucelabs.mydemoapp.android.view.activities.MainActivity",
-        app_wait_activity="com.saucelabs.mydemoapp.android.view.activities.MainActivity",
+        app="/Users/kaydeee/Developer/portfolio-projects/appium-project/appium-android-portfolio/sauceDemo.apk",
     )
 
 
