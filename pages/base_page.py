@@ -1,4 +1,5 @@
 from appium.webdriver.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -14,14 +15,14 @@ class BasePage:
     def _wait(self, timeout: int) -> WebDriverWait:
         return WebDriverWait(self.driver, timeout)
 
-    def wait_for_element(self, locator: ElementLocator, timeout: int = 10):
+    def wait_for_element(self, locator: ElementLocator, timeout: int = 10) -> WebElement:
         return self._wait(timeout).until(EC.presence_of_element_located(locator))
 
-    def wait_for_clickable(self, locator: ElementLocator, timeout: int = 10):
+    def wait_for_clickable(self, locator: ElementLocator, timeout: int = 10) -> WebElement:
         return self._wait(timeout).until(EC.element_to_be_clickable(locator))
 
     def wait_for_disappearance(self, locator: ElementLocator, timeout: int = 10):
-        return self._wait(timeout).until(EC.invisibility_of_element_located(locator))
+        self._wait(timeout).until(EC.invisibility_of_element_located(locator))
 
     # Actions
     def tap(self, locator: ElementLocator, timeout: int = 10) -> None:
@@ -37,4 +38,5 @@ class BasePage:
 
     def get_elements(self, locator: ElementLocator, timeout: int = 10) -> list:
         self.wait_for_element(locator, timeout)
+        # the *locator unpacks the strategy and value for the method signature required by find_elements
         return self.driver.find_elements(*locator)
