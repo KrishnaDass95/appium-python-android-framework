@@ -7,6 +7,8 @@ from view_components.element_locator import ElementLocator
 
 
 class BasePage:
+    # Tests calls Individual pages, ind pages
+    # call BasePage and BasePage calls Appium for actions
     def __init__(self, driver: WebDriver):
         self.driver = driver
         self.driver.implicitly_wait(0)
@@ -38,5 +40,12 @@ class BasePage:
 
     def get_elements(self, locator: ElementLocator, timeout: int = 10) -> list:
         self.wait_for_element(locator, timeout)
-        # the *locator unpacks the strategy and value for the method signature required by find_elements
+        # the *locator unpacks the strategy and value
+        # for the method signature required by find_elements
         return self.driver.find_elements(*locator)
+
+    def find_by_uiautomator(self, selector: str, timeout: int = 10) -> WebElement:
+        from appium.webdriver.common.appiumby import AppiumBy
+        return self._wait(timeout).until(
+            EC.presence_of_element_located((AppiumBy.ANDROID_UIAUTOMATOR, selector))
+        )
