@@ -23,7 +23,7 @@ class CatalogPage(BasePage):
     @allure.step("Tap product by name {name}")
     def tap_product_by_name(self, name: str) -> None:
         self.find_by_uiautomator(
-            f'new UiScrollable(new UiSelector().scrollable(true))'
+            f"new UiScrollable(new UiSelector().scrollable(true))"
             f'.scrollIntoView(new UiSelector().text("{name}"))'
         ).click()
 
