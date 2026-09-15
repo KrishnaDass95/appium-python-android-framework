@@ -1,4 +1,5 @@
 from appium.webdriver.webdriver import WebDriver
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
@@ -28,7 +29,13 @@ class BasePage:
 
     # Actions
     def tap(self, locator: ElementLocator, timeout: int = 10) -> None:
-        self.wait_for_clickable(locator, timeout).click()
+        for attempt in range(3):
+            try:
+                self.wait_for_clickable(locator, timeout).click()
+                return
+            except StaleElementReferenceException:
+                if attempt == 2:
+                    raise
 
     def send_keys(self, locator: ElementLocator, text: str, timeout: int = 10) -> None:
         element = self.wait_for_clickable(locator, timeout)
@@ -37,6 +44,13 @@ class BasePage:
 
     def get_text(self, locator: ElementLocator, timeout: int = 10) -> str:
         return self.wait_for_element(locator, timeout).text
+
+    def is_element_present(self, locator: ElementLocator, timeout: int = 3) -> bool:
+        try:
+            self.wait_for_element(locator, timeout)
+            return True
+        except TimeoutException:
+            return False
 
     def get_elements(self, locator: ElementLocator, timeout: int = 10) -> list:
         self.wait_for_element(locator, timeout)

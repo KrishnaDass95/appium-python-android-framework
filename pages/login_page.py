@@ -14,5 +14,5 @@ class LoginPage(BasePage):
         self.send_keys(self._username_field, username)
         self.send_keys(self._password_field, password)
         self.tap(self._login_button)
-        
+    
     

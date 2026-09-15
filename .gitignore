@@ -13,3 +13,6 @@ allure-report/
 
 # Env files
 .env
+
+# Other folders
+Docs/

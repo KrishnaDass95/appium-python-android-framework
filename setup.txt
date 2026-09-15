@@ -1,0 +1,4 @@
+1. Appium server start
+2. Android studio
+3. claude-code terminal instance
+4. claude chat

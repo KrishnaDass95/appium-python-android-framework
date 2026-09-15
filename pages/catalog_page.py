@@ -3,6 +3,7 @@ from enum import Enum
 import allure
 
 from pages.base_page import BasePage
+from pages.login_page import LoginPage
 from view_components.element_locator import accessibility_locator, id_locator
 
 
@@ -19,6 +20,9 @@ class CatalogPage(BasePage):
     _cart_button = id_locator("cartRL")
     _product_titles = id_locator("titleTV")
     _product_images = id_locator("productIV")
+    _login_menu_button = accessibility_locator("Login Menu Item")
+    _logout_menu_button = accessibility_locator("Logout Menu Item")
+    _logout_confirm_button = id_locator("android:id/button1")
 
     @allure.step("Tap product by name {name}")
     def tap_product_by_name(self, name: str) -> None:
@@ -47,3 +51,22 @@ class CatalogPage(BasePage):
     @allure.step("Tap menu")
     def tap_menu(self) -> None:
         self.tap(self._menu_button)
+
+    @allure.step("Tap login from hamburger menu")
+    def tap_login_from_menu(self):
+        self.tap(self._login_menu_button)
+        return LoginPage(driver=self.driver)
+
+    def get_logout_state_text(self) -> str:
+        return self.get_text(self._logout_menu_button)
+
+    @allure.step("Logout")
+    def logout_if_logged_in(self):
+        if not self.is_element_present(self._logout_menu_button, timeout=2):
+            self.tap(self._menu_button)
+        if self.get_text(self._logout_menu_button) == "Log Out":
+            self.tap(self._logout_menu_button)
+            self.tap(self._logout_confirm_button)
+        else:
+            self.driver.back()
+
