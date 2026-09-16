@@ -1,6 +1,7 @@
 import allure
 
 from pages.base_page import BasePage
+from pages.cart_page import CartPage
 from view_components.element_locator import accessibility_locator, id_locator
 
 
@@ -36,8 +37,11 @@ class ProductPage(BasePage):
         self.tap(self._add_to_cart_button)
 
     @allure.step("Tap cart icon")
-    def tap_cart(self) -> None:
+    def tap_cart(self) -> CartPage:
         self.tap(self._cart_button)
+        cart_page = CartPage(driver=self.driver)
+        cart_page.wait_for_element(cart_page._cart_title)
+        return cart_page
 
     @allure.step("Get cart badge count")
     def get_cart_count(self) -> int:

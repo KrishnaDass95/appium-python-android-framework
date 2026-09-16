@@ -29,8 +29,12 @@ def driver():
 # to test function
 
 @pytest.fixture
-def catalog_page(driver) -> CatalogPage:
-    return CatalogPage(driver)
+def catalog_page(driver, reset_to_catalog) -> CatalogPage:
+    # Explicit dependency on reset_to_catalog ensures the app is already in a
+    # clean state (terminate + activate) before we wait for the catalog.
+    page = CatalogPage(driver)
+    page.wait_for_element(page._menu_button, timeout=15)
+    return page
 
 @pytest.fixture
 def login_page(driver, catalog_page) -> LoginPage:
@@ -42,20 +46,22 @@ def login_page(driver, catalog_page) -> LoginPage:
 def product_detail_page(driver) -> ProductPage:
     return ProductPage(driver)
 
-# Runs after every test regardless of pass/fail.
+# Runs before every test.
 # terminate_app kills the process (clears any dialogs, stuck screens, broken state),
-# then activate_app relaunches it fresh on the catalog screen.
-# activate_app alone is not enough — it only works if the app is backgrounded.
-# If it's in the foreground with a dialog, activate_app does nothing.
-# Swallowed silently — if reset itself fails, we still want the next test to attempt.
+# then activate_app relaunches fresh on the catalog screen.
+# activate_app alone is not enough — if the app is in the foreground with a dialog,
+# activate_app does nothing; terminate first to guarantee a clean relaunch.
+# Running in setup (not teardown) means the first test also gets a clean launch,
+# bypassing any first-run UI that appears when the session creates the driver.
+# Swallowed silently — if reset fails we still want the next test to attempt.
 @pytest.fixture(autouse=True)
 def reset_to_catalog(driver):
-    yield
     try:
         driver.terminate_app("com.saucelabs.mydemoapp.android")
         driver.activate_app("com.saucelabs.mydemoapp.android")
     except Exception:  # noqa: BLE001, S110
         pass
+    yield
 
 
 # Runs after every test. If the test itself failed (rep_call.failed),

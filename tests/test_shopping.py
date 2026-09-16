@@ -8,12 +8,12 @@ from tests.base_test import BaseTest
 class TestAuthentication(BaseTest):
     @allure.story("Valid credentials")
     @allure.severity(allure.severity_level.CRITICAL)
-    @pytest.mark.smoke
+    # @pytest.mark.smoke
     def test_valid_login(self, catalog_page):
         try:
             catalog_page.tap_menu()
             login_page = catalog_page.tap_login_from_menu()
-            login_page.login("test123@sauceDemo", "sauceDemo")
+            login_page.login("bob@example.com", "10203040")
             catalog_page.tap_menu()
             assert catalog_page.get_logout_state_text() == "Log Out"
         finally:
@@ -44,5 +44,46 @@ class TestProductCatalog(BaseTest):
         print(titles)
         assert len(titles) > 0
         assert "Sauce Labs Backpack" in titles
+
+
+    @allure.story("Test product detail page")
+    # @pytest.mark.smoke
+    def test_product_detail_navigation(self, catalog_page):
+
+        titles = catalog_page.get_product_titles()
+        first_product_title = titles[0]
+        product_page = catalog_page.tap_product_by_name(first_product_title)
+        assert first_product_title == product_page.get_product_name()
+
+    @pytest.mark.smoke
+    def test_cart_item_value(self, catalog_page):
+
+        qty_to_add = 2
+        total_qty = 3
+        cart_page = None
+        try:
+            titles = catalog_page.get_product_titles()
+            first_product_title = titles[0]
+            product_page = catalog_page.tap_product_by_name(first_product_title)
+            product_page.increase_quantity(qty_to_add)
+            product_page.add_product_to_cart()
+            assert product_page.get_cart_count() == total_qty
+
+            cart_page = product_page.tap_cart()
+            assert cart_page.get_item_quantity(0) == total_qty
+        finally:
+            try:
+                if cart_page is not None:
+                    cart_page.remove_item(0)
+            except Exception:  # noqa: BLE001, S110
+                pass
+
+        
+    
+
+
+        
+            
+
 
 

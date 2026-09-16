@@ -4,6 +4,7 @@ import allure
 
 from pages.base_page import BasePage
 from pages.login_page import LoginPage
+from pages.product_detail_page import ProductPage
 from view_components.element_locator import accessibility_locator, id_locator
 
 
@@ -25,11 +26,21 @@ class CatalogPage(BasePage):
     _logout_confirm_button = id_locator("android:id/button1")
 
     @allure.step("Tap product by name {name}")
-    def tap_product_by_name(self, name: str) -> None:
+    def tap_product_by_name(self, name: str) -> ProductPage:
+        # scrollIntoView makes the item visible. The product image (productIV) is
+        # the actual click target — clicking titleTV doesn't trigger navigation.
+        # After scrolling, we match the title's visible index to the image at the
+        # same position (RecyclerView renders them in the same order).
         self.find_by_uiautomator(
             f"new UiScrollable(new UiSelector().scrollable(true))"
             f'.scrollIntoView(new UiSelector().text("{name}"))'
-        ).click()
+        )
+        visible_titles = self.get_elements(self._product_titles)
+        index = next(i for i, t in enumerate(visible_titles) if t.text == name)
+        self.get_elements(self._product_images)[index].click()
+        product_detail = ProductPage(driver=self.driver)
+        product_detail.wait_for_element(product_detail._product_price)
+        return product_detail
 
     @allure.step("Tap product at index {index}")
     def tap_product_by_index(self, index: int) -> None:
@@ -55,7 +66,9 @@ class CatalogPage(BasePage):
     @allure.step("Tap login from hamburger menu")
     def tap_login_from_menu(self):
         self.tap(self._login_menu_button)
-        return LoginPage(driver=self.driver)
+        login = LoginPage(driver=self.driver)
+        login.wait_for_element(login._login_button)
+        return login
 
     def get_logout_state_text(self) -> str:
         return self.get_text(self._logout_menu_button)
