@@ -25,6 +25,7 @@ class TestAuthentication(BaseTest):
                 pass
 
 
+    @allure.story("Invalid credentials")
     @allure.severity(allure.severity_level.NORMAL)
     @pytest.mark.skip(reason="App bug: Invalid creds bypass login")
     def test_invalid_login(self, login_page, catalog_page):
@@ -38,6 +39,7 @@ class TestAuthentication(BaseTest):
 class TestProductCatalog(BaseTest):
 
     @allure.story("Test product catalog loads")
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_product_catalog_loads(self, catalog_page):
 
         titles = catalog_page.get_product_titles()
@@ -47,6 +49,7 @@ class TestProductCatalog(BaseTest):
 
 
     @allure.story("Test product detail page")
+    @allure.severity(allure.severity_level.NORMAL)
     # @pytest.mark.smoke
     def test_product_detail_navigation(self, catalog_page):
 
@@ -55,6 +58,8 @@ class TestProductCatalog(BaseTest):
         product_page = catalog_page.tap_product_by_name(first_product_title)
         assert first_product_title == product_page.get_product_name()
 
+    @allure.story("Cart reflects correct item quantity")
+    @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.smoke
     def test_cart_item_value(self, catalog_page):
 
