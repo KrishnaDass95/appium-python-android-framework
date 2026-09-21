@@ -1,3 +1,4 @@
+import allure
 from selenium.webdriver.remote.webelement import WebElement
 
 from pages.base_page import BasePage
@@ -43,42 +44,52 @@ class CartPage(BasePage):
 
     # --- Cart item actions ---
 
+    @allure.step("Increase quantity of item at index {item_index}")
     def increase_item_quantity(self, item_index: int) -> None:
         item = self._get_item(item_index)
         item.find_element(*self._ITEM_PLUS_BTN).click()
 
+    @allure.step("Decrease quantity of item at index {item_index}")
     def decrease_item_quantity(self, item_index: int) -> None:
         item = self._get_item(item_index)
         item.find_element(*self._ITEM_MINUS_BTN).click()
 
+    @allure.step("Remove item at index {item_index}")
     def remove_item(self, item_index: int) -> None:
         item = self._get_item(item_index)
         item.find_element(*self._ITEM_REMOVE_BTN).click()
 
     # --- Cart item reads ---
 
+    @allure.step("Get name of item at index {item_index}")
     def get_item_name(self, item_index: int) -> str:
         item = self._get_item(item_index)
         return item.find_element(*self._ITEM_TITLE).text
 
+    @allure.step("Get price of item at index {item_index}")
     def get_item_price(self, item_index: int) -> str:
         item = self._get_item(item_index)
         return item.find_element(*self._ITEM_PRICE).text
 
+    @allure.step("Get quantity of item at index {item_index}")
     def get_item_quantity(self, item_index: int) -> int:
         item = self._get_item(item_index)
         return int(item.find_element(*self._ITEM_QTY).text)
 
+    @allure.step("Get cart item count")
     def get_item_count(self) -> int:
         return len(self._get_cart_items())
 
     # --- Page-level reads and actions ---
 
+    @allure.step("Get total items label")
     def get_total_items_label(self) -> str:
         return self.get_text(self._total_items_label)
 
+    @allure.step("Get total price")
     def get_total_price(self) -> str:
         return self.get_text(self._total_price_label)
 
+    @allure.step("Tap Proceed to Checkout")
     def tap_proceed_to_checkout(self):
         self.tap(self._proceed_to_checkout_btn)

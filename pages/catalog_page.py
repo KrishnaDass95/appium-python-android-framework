@@ -70,6 +70,7 @@ class CatalogPage(BasePage):
         login.wait_for_element(login._login_button)
         return login
 
+    @allure.step("Get logout menu item text")
     def get_logout_state_text(self) -> str:
         return self.get_text(self._logout_menu_button)
 
