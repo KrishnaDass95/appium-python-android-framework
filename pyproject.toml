@@ -22,7 +22,7 @@ dependencies = [
 
 [tool.pytest.ini_options]
   testpaths = ["tests"]
-  addopts = "-v --tb=short"
+  addopts = "-v --tb=short --alluredir=allure-results --clean-alluredir"
   markers = [
       "smoke: core happy-path tests",
       "regression: extended coverage tests",

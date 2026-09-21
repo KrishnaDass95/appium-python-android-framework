@@ -64,6 +64,7 @@ class TestProductCatalog(BaseTest):
     def test_cart_item_value(self, catalog_page):
 
         qty_to_add = 2
+        # default qty is 1, so after adding 2, we're asserting the total qty
         total_qty = 3
         cart_page = None
         try:
@@ -75,7 +76,7 @@ class TestProductCatalog(BaseTest):
             assert product_page.get_cart_count() == total_qty
 
             cart_page = product_page.tap_cart()
-            assert cart_page.get_item_quantity(0) == total_qty
+            assert cart_page.get_item_quantity(0) == total_qty + 4 # failure added to test allure
         finally:
             try:
                 if cart_page is not None:

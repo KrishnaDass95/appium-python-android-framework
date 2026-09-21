@@ -1,3 +1,6 @@
+import os
+import sys
+
 import allure
 import pytest
 from appium import webdriver
@@ -6,6 +9,15 @@ from config.settings import settings
 from pages.catalog_page import CatalogPage
 from pages.login_page import LoginPage
 from pages.product_detail_page import ProductPage
+
+
+def pytest_sessionstart(session):
+    os.makedirs("allure-results", exist_ok=True)
+    with open("allure-results/environment.properties", "w") as f:
+        f.write(f"App={settings.appium.app_package}\n")
+        f.write(f"Platform={settings.appium.platform_name}\n")
+        f.write(f"Device={settings.appium.device_name}\n")
+        f.write(f"Python={sys.version_info.major}.{sys.version_info.minor}\n")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
