@@ -29,9 +29,7 @@ def pytest_runtest_makereport(item, call):
 
 @pytest.fixture(scope="session")
 def driver():
-    d = webdriver.Remote(
-        settings.appium_server_url, options=settings.appium.to_appium_options()
-    )
+    d = webdriver.Remote(settings.appium_server_url, options=settings.appium.to_appium_options())
     d.implicitly_wait(0)
     yield d
     d.quit()
@@ -39,6 +37,7 @@ def driver():
 
 # function scoped page fixtures, by default they're scoped
 # to test function
+
 
 @pytest.fixture
 def catalog_page(driver, reset_to_catalog) -> CatalogPage:
@@ -48,15 +47,18 @@ def catalog_page(driver, reset_to_catalog) -> CatalogPage:
     page.wait_for_element(page._menu_button, timeout=15)
     return page
 
+
 @pytest.fixture
 def login_page(driver, catalog_page) -> LoginPage:
     catalog_page.tap_menu()
     catalog_page.tap_login_from_menu()
     return LoginPage(driver)
 
+
 @pytest.fixture
 def product_detail_page(driver) -> ProductPage:
     return ProductPage(driver)
+
 
 # Runs before every test.
 # terminate_app kills the process (clears any dialogs, stuck screens, broken state),
@@ -88,6 +90,5 @@ def attach_screenshot_on_failure(request, driver):
         allure.attach(
             driver.get_screenshot_as_png(),
             name=f"failure-{request.node.name}",
-            attachment_type=allure.attachment_type.PNG
+            attachment_type=allure.attachment_type.PNG,
         )
-

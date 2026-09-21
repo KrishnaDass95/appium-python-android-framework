@@ -1,3 +1,5 @@
+import contextlib
+
 import allure
 import pytest
 
@@ -19,11 +21,8 @@ class TestAuthentication(BaseTest):
         finally:
             # Swallow teardown errors so a cleanup failure doesn't cascade
             # into the next test. reset_to_catalog fixture handles app state reset.
-            try:
+            with contextlib.suppress(Exception):
                 catalog_page.logout_if_logged_in()
-            except Exception:  # noqa: BLE001, S110
-                pass
-
 
     @allure.story("Invalid credentials")
     @allure.severity(allure.severity_level.NORMAL)
@@ -37,7 +36,6 @@ class TestAuthentication(BaseTest):
 
 @allure.feature("Product Catalog")
 class TestProductCatalog(BaseTest):
-
     @allure.story("Test product catalog loads")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_product_catalog_loads(self, catalog_page):
@@ -46,7 +44,6 @@ class TestProductCatalog(BaseTest):
         print(titles)
         assert len(titles) > 0
         assert "Sauce Labs Backpack" in titles
-
 
     @allure.story("Test product detail page")
     @allure.severity(allure.severity_level.NORMAL)
@@ -76,20 +73,8 @@ class TestProductCatalog(BaseTest):
             assert product_page.get_cart_count() == total_qty
 
             cart_page = product_page.tap_cart()
-            assert cart_page.get_item_quantity(0) == total_qty + 4 # failure added to test allure
+            assert cart_page.get_item_quantity(0) == total_qty + 4  # failure added to test allure
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 if cart_page is not None:
                     cart_page.remove_item(0)
-            except Exception:  # noqa: BLE001, S110
-                pass
-
-        
-    
-
-
-        
-            
-
-
-

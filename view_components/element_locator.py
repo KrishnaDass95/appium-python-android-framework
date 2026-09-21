@@ -1,7 +1,8 @@
 from appium.webdriver.common.appiumby import AppiumBy
 
-# Standard locator - driver.find_element(AppiumBy.ID, "com.saucelabs.mydemoapp.android:id/loginBtn").click()
+# Standard locator - driver.find_element(AppiumBy.ID, "com.saucelabs.mydemoapp.android:id/loginBtn")
 type ElementLocator = tuple[str, str]
+
 
 def id_locator(element_id: str) -> ElementLocator:
     return (AppiumBy.ID, element_id)

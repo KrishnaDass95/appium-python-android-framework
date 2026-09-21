@@ -60,6 +60,7 @@ class BasePage:
 
     def find_by_uiautomator(self, selector: str, timeout: int = 10) -> WebElement:
         from appium.webdriver.common.appiumby import AppiumBy
+
         return self._wait(timeout).until(
             EC.presence_of_element_located((AppiumBy.ANDROID_UIAUTOMATOR, selector))
         )

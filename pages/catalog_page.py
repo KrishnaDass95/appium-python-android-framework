@@ -83,4 +83,3 @@ class CatalogPage(BasePage):
             self.tap(self._logout_confirm_button)
         else:
             self.driver.back()
-

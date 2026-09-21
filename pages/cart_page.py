@@ -17,9 +17,9 @@ class CartPage(BasePage):
     # Full resource-id in the XPath string is required because id_locator's
     # auto-prefix only applies to AppiumBy.ID, not raw XPath strings.
     _cart_item_rows = xpath_locator(
-        '//androidx.recyclerview.widget.RecyclerView'
+        "//androidx.recyclerview.widget.RecyclerView"
         '[@resource-id="com.saucelabs.mydemoapp.android:id/productRV"]'
-        '/android.view.ViewGroup'
+        "/android.view.ViewGroup"
     )
 
     # Item-scoped locators — used with element.find_element(*locator), NOT driver

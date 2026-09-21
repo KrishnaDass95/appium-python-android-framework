@@ -28,3 +28,20 @@ dependencies = [
       "regression: extended coverage tests",
   ]
 
+[tool.ruff]
+  line-length = 100
+  target-version = "py312"
+
+[tool.ruff.lint]
+    select = ["E", "F", "I", "UP", "B", "SIM"]
+    ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+    "tests/**" = ["S101"]  # allow assert statements in tests
+
+
+[tool.mypy]
+  python_version = "3.12"
+  warn_return_any = true
+  warn_unused_configs = true
+  ignore_missing_imports = true
