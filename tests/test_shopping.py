@@ -73,7 +73,7 @@ class TestProductCatalog(BaseTest):
             assert product_page.get_cart_count() == total_qty
 
             cart_page = product_page.tap_cart()
-            assert cart_page.get_item_quantity(0) == total_qty + 4  # failure added to test allure
+            assert cart_page.get_item_quantity(0) == total_qty
         finally:
             with contextlib.suppress(Exception):
                 if cart_page is not None:
