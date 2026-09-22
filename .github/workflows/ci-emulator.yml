@@ -1,0 +1,85 @@
+name: Android Emulator Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Appium and UIAutomator2 driver
+        run: |
+          npm install -g appium
+          appium driver install uiautomator2
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Download Sauce Labs demo app
+        run: |
+          curl -L -o app.apk \
+            https://github.com/saucelabs/my-demo-app-android/releases/download/2.2.0/mda-2.2.0-25.apk
+
+      - name: Run tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          APPIUM_SERVER_URL: "http://127.0.0.1:4723"
+          APPIUM__APP: "${{ github.workspace }}/app.apk"
+          APPIUM__APP_PACKAGE: "com.saucelabs.mydemoapp.android"
+          APPIUM__APP_ACTIVITY: "com.saucelabs.mydemoapp.android.view.activities.SplashActivity"
+          APPIUM__APP_WAIT_ACTIVITY: "com.saucelabs.mydemoapp.android.*"
+          APPIUM__NO_RESET: "false"
+          AUTO_START_SERVER: "false"
+        with:
+          api-level: 31
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          cores: 2
+          ram-size: 4096M
+          disable-animations: true
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect
+            -no-snapshot -noaudio -no-boot-anim
+          script: |
+            adb install app.apk
+            appium --address 127.0.0.1 --port 4723 > appium.log 2>&1 &
+            sleep 8
+            uv run pytest tests/ --alluredir=allure-results -v --tb=short
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-emulator
+          path: allure-results/
+
+      - name: Upload Appium log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appium-log-emulator
+          path: appium.log
