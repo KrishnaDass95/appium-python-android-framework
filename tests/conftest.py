@@ -1,9 +1,11 @@
 import os
 import sys
+from urllib.parse import urlparse
 
 import allure
 import pytest
 from appium import webdriver
+from appium.webdriver.appium_service import AppiumService
 
 from config.settings import settings
 from pages.catalog_page import CatalogPage
@@ -28,7 +30,24 @@ def pytest_runtest_makereport(item, call):
 
 
 @pytest.fixture(scope="session")
-def driver():
+def appium_server():
+    if not settings.auto_start_server:
+        yield
+        return
+    service = AppiumService()
+    parsed = urlparse(settings.appium_server_url)
+    host = parsed.hostname
+    port = parsed.port
+    try:
+        service.start(args=["--address", host, "--port", str(port)])
+    except Exception as e:
+        pytest.exit(f"Appium server could not start: {e}", returncode=3)
+    yield
+    service.stop()
+
+
+@pytest.fixture(scope="session")
+def driver(appium_server):
     d = webdriver.Remote(settings.appium_server_url, options=settings.appium.to_appium_options())
     d.implicitly_wait(0)
     yield d
