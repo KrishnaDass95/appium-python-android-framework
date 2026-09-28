@@ -1,0 +1,27 @@
+pipeline {
+    agent { label 'android-device' }
+
+    environment {
+        APPIUM_SERVER_URL         = 'http://127.0.0.1:4723'
+        APPIUM__APP               = "${WORKSPACE}/sauceDemo.apk"
+        APPIUM__APP_PACKAGE       = 'com.saucelabs.mydemoapp.android'
+        APPIUM__APP_ACTIVITY      = 'com.saucelabs.mydemoapp.android.view.activities.SplashActivity'
+        APPIUM__APP_WAIT_ACTIVITY = 'com.saucelabs.mydemoapp.android.*'
+        APPIUM__NO_RESET          = 'false'
+        APPIUM__DEVICE_NAME       = credentials('PHYSICAL_DEVICE_UDID')
+        AUTO_START_SERVER         = 'true'
+    }
+
+    stages {
+        stage('Checkout')     { steps { checkout scm } }
+        stage('Dependencies') { steps { sh 'uv sync --all-extras' } }
+        stage('Test')         { steps { sh 'uv run pytest tests/ --alluredir=allure-results -v --tb=short' } }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'allure-results/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'appium.log',        allowEmptyArchive: true
+        }
+    }
+}
