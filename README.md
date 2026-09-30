@@ -59,6 +59,8 @@ tests/
   test_shopping.py             the tests
 .github/workflows/
   ci-emulator.yml              GitHub Actions emulator pipeline
+jenkins/
+  Jenkinsfile.physical-device  Jenkins pipeline for USB-connected device
 ```
 
 ## Design decisions
@@ -191,23 +193,31 @@ extended coverage below.
 
 ## CI
 
-`.github/workflows/ci-emulator.yml` runs on pushes to `main` and on pull requests.
+Two pipelines are active. Both use the same tests, page objects and locators — only the server URL
+and device capabilities change. That is the point of the Appium abstraction.
 
-The job installs Python 3.12, uv, Node and Appium with the UiAutomator2 driver, then enables KVM —
+**GitHub Actions — `ci-emulator.yml`** runs on every push to `main` and on pull requests. It
+installs Python 3.12, uv, Node and Appium with the UiAutomator2 driver, then enables KVM —
 hardware virtualisation is required for an x86_64 emulator on Linux, and forgetting it is the usual
 reason Android CI fails. It downloads the demo APK from the Sauce Labs release, then hands off to
 `reactivecircus/android-emulator-runner`, which boots a headless Pixel 6 on API 31 with animations
 disabled, installs the APK over adb, starts Appium in the background and runs pytest. Capabilities
 come in as environment variables, so no config file changes between local and CI.
 
-Allure results and the Appium server log are uploaded as artifacts with `if: always()`, so a failed
-run still leaves you a report and a server log to read.
+**Jenkins — `jenkins/Jenkinsfile.physical-device`** runs on a local Mac node (`android-device`)
+with a real Android device connected via USB. `AUTO_START_SERVER=true` lets the `appium_server`
+session fixture start and stop AppiumService programmatically — no manual Appium start needed.
+Credentials (device serial) are stored in the Jenkins Credentials Store and injected at runtime.
+Because Jenkins is launched by launchd rather than a login shell, all required tools — uv, node,
+appium, adb — and `ANDROID_HOME` are declared explicitly in the pipeline's environment block.
+
+Allure results and the Appium server log are uploaded as artifacts with `if: always()` (GitHub
+Actions) and `archiveArtifacts` (Jenkins), so a failed run still leaves a report to read.
 
 ## Roadmap
 
-- Wire up `AUTO_START_SERVER=true` as the default. The `appium_server` fixture already starts and
-  stops `AppiumService` programmatically; it is off by default while the manual workflow is in use.
-- Jenkins pipelines for three more targets: a physical device, BrowserStack and AWS Device Farm. The
-  `extra_caps` field on `AppiumCapabilities` exists for the vendor-specific capabilities these need.
+- Jenkins pipelines for BrowserStack and AWS Device Farm. The `extra_caps` field on
+  `AppiumCapabilities` exists for vendor-specific capabilities; `APPIUM__EXTRA_CAPS` accepts a JSON
+  string that pydantic-settings parses into the dict automatically.
 - Catalog sort coverage. `SortOption` and `CatalogPage.tap_sort_by()` are implemented but untested.
 - Checkout flow, starting from `CartPage.tap_proceed_to_checkout()`.
