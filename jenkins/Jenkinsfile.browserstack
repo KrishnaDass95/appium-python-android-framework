@@ -1,0 +1,27 @@
+pipeline {
+    agent any
+
+    environment {
+        APPIUM_SERVER_URL         = 'https://hub-cloud.browserstack.com/wd/hub'
+        APPIUM__APP               = credentials('BS_APP_URL')
+        APPIUM__APP_PACKAGE       = 'com.saucelabs.mydemoapp.android'
+        APPIUM__APP_ACTIVITY      = 'com.saucelabs.mydemoapp.android.view.activities.SplashActivity'
+        APPIUM__APP_WAIT_ACTIVITY = 'com.saucelabs.mydemoapp.android.*'
+        APPIUM__NO_RESET          = 'false'
+        AUTO_START_SERVER         = 'false'
+        BS_CREDS                  = credentials('browserstack-creds')
+        APPIUM__EXTRA_CAPS        = """{"bstack:options":{"userName":"${BS_CREDS_USR}","accessKey":"${BS_CREDS_PSW}","deviceName":"Google Pixel 6","osVersion":"12.0","buildName":"Jenkins #${env.BUILD_NUMBER}"}}"""
+    }
+
+    stages {
+        stage('Checkout')     { steps { checkout scm } }
+        stage('Dependencies') { steps { sh 'uv sync --all-extras' } }
+        stage('Test')         { steps { sh 'uv run pytest tests/ --alluredir=allure-results -v --tb=short' } }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'allure-results/**', allowEmptyArchive: true
+        }
+    }
+}

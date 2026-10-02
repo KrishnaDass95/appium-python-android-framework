@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+
+    environment {
+        APPIUM_SERVER_URL         = credentials('AWS_DF_ENDPOINT')
+        APPIUM__APP               = credentials('AWS_DF_APP_ARN')
+        APPIUM__APP_PACKAGE       = 'com.saucelabs.mydemoapp.android'
+        APPIUM__APP_ACTIVITY      = 'com.saucelabs.mydemoapp.android.view.activities.SplashActivity'
+        APPIUM__APP_WAIT_ACTIVITY = 'com.saucelabs.mydemoapp.android.*'
+        APPIUM__NO_RESET          = 'false'
+        AUTO_START_SERVER         = 'false'
+        AWS_ACCESS_KEY_ID         = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY     = credentials('AWS_SECRET_ACCESS_KEY')
+        AWS_DEFAULT_REGION        = 'us-west-2'
+    }
+
+    stages {
+        stage('Checkout')     { steps { checkout scm } }
+        stage('Dependencies') { steps { sh 'uv sync --all-extras' } }
+        stage('Test')         { steps { sh 'uv run pytest tests/ --alluredir=allure-results -v --tb=short' } }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'allure-results/**', allowEmptyArchive: true
+        }
+    }
+}
