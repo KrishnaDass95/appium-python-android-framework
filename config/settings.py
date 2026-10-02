@@ -35,12 +35,6 @@ class AppiumCapabilities(BaseModel):
         return options
 
 
-def create_default_caps():
-    return AppiumCapabilities(
-        app="/Users/kaydeee/Developer/portfolio-projects/appium-project/appium-android-portfolio/sauceDemo.apk",
-    )
-
-
 class Settings(BaseSettings):
     # model_config - giving Base settings instructions on how to read env file
     model_config = SettingsConfigDict(
@@ -50,10 +44,9 @@ class Settings(BaseSettings):
     appium_server_url: str = "http://127.0.0.1:4723"
     implicit_wait: int = 10
     auto_start_server: bool = False
-    appium: AppiumCapabilities = Field(
-        # default factory, calls the function each time and reserves new memory for appium caps
-        default_factory=create_default_caps
-    )
+    # No default: APPIUM__APP (and the other APPIUM__* vars) must come from the environment / .env
+    appium: AppiumCapabilities
 
 
-settings = Settings()
+# "appium" is populated from APPIUM__* env vars at runtime, which mypy can't see
+settings = Settings()  # type: ignore[call-arg]

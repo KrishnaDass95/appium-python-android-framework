@@ -1,5 +1,7 @@
 # Appium Android Framework
 
+![CI](https://github.com/KrishnaDass95/appium-python-android-framework/actions/workflows/ci-emulator.yml/badge.svg)
+
 UI test automation for the [Sauce Labs My Demo App](https://github.com/saucelabs/my-demo-app-android),
 an open-source Android app built as a practice target for mobile automation. The suite drives a real
 emulator or device through Appium 2 and UiAutomator2, produces Allure reports with step-level detail
@@ -61,6 +63,8 @@ tests/
   ci-emulator.yml              GitHub Actions emulator pipeline
 jenkins/
   Jenkinsfile.physical-device  Jenkins pipeline for USB-connected device
+  Jenkinsfile.browserstack     Jenkins + BrowserStack (written, pending verification)
+  Jenkinsfile.aws-device-farm  Jenkins + AWS Device Farm (written, pending verification)
 ```
 
 ## Design decisions
@@ -193,7 +197,7 @@ extended coverage below.
 
 ## CI
 
-Two pipelines are active. Both use the same tests, page objects and locators — only the server URL
+Two pipelines are verified and running; two more are written and pending verification against the cloud services (see below). Both use the same tests, page objects and locators — only the server URL
 and device capabilities change. That is the point of the Appium abstraction.
 
 **GitHub Actions — `ci-emulator.yml`** runs on every push to `main` and on pull requests. It
@@ -211,13 +215,19 @@ Credentials (device serial) are stored in the Jenkins Credentials Store and inje
 Because Jenkins is launched by launchd rather than a login shell, all required tools — uv, node,
 appium, adb — and `ANDROID_HOME` are declared explicitly in the pipeline's environment block.
 
+**BrowserStack and AWS Device Farm — `Jenkinsfile.browserstack`, `Jenkinsfile.aws-device-farm`**
+are complete pipelines that point the same suite at a cloud Appium hub. Vendor-specific capabilities
+(`bstack:options`) are passed through `APPIUM__EXTRA_CAPS`. Neither has run against its service yet:
+BrowserStack currently rejects the demo APK at upload (an issue on their side, reported to support),
+and AWS Device Farm is not set up. They are marked as pending rather than working.
+
 Allure results and the Appium server log are uploaded as artifacts with `if: always()` (GitHub
 Actions) and `archiveArtifacts` (Jenkins), so a failed run still leaves a report to read.
 
 ## Roadmap
 
-- Jenkins pipelines for BrowserStack and AWS Device Farm. The `extra_caps` field on
-  `AppiumCapabilities` exists for vendor-specific capabilities; `APPIUM__EXTRA_CAPS` accepts a JSON
-  string that pydantic-settings parses into the dict automatically.
+- Verify the BrowserStack and AWS Device Farm pipelines end to end once the APK upload issue is
+  resolved and a Device Farm project exists.
 - Catalog sort coverage. `SortOption` and `CatalogPage.tap_sort_by()` are implemented but untested.
 - Checkout flow, starting from `CartPage.tap_proceed_to_checkout()`.
+- Publish the Allure report to GitHub Pages from CI.
