@@ -1,11 +1,27 @@
 # Appium Android Framework
 
 ![CI](https://github.com/KrishnaDass95/appium-python-android-framework/actions/workflows/ci-emulator.yml/badge.svg)
+![Lint](https://github.com/KrishnaDass95/appium-python-android-framework/actions/workflows/lint.yml/badge.svg)
+
+**[View the live Allure report →](https://krishnadass95.github.io/appium-python-android-framework/)**
+(regenerated from every push to `main`)
+
+![Allure report overview](assets/allure-report.png)
 
 UI test automation for the [Sauce Labs My Demo App](https://github.com/saucelabs/my-demo-app-android),
 an open-source Android app built as a practice target for mobile automation. The suite drives a real
 emulator or device through Appium 2 and UiAutomator2, produces Allure reports with step-level detail
 and failure screenshots, and runs on every push via GitHub Actions on a headless emulator.
+
+## Why this project
+
+I built this to show how I'd structure a mobile test framework that has to survive real use, not just
+pass a demo. The interesting problems were keeping a single session-scoped driver healthy when a test
+fails mid-flow, handling Android's stale-element races without blanket retries, and running the same
+suite unchanged across four targets (emulator, physical device, BrowserStack, AWS Device Farm) by
+moving everything target-specific into environment configuration.
+
+## Overview
 
 Five tests cover login and the product catalog. The point of the project is the framework underneath
 them: a page object layer with no shared state, explicit waits everywhere, config driven entirely by
@@ -197,6 +213,9 @@ extended coverage below.
 
 ## CI
 
+A separate `lint.yml` workflow runs ruff (lint and format check) and mypy on every push and pull
+request, with no emulator needed, so style and type errors fail fast.
+
 Two pipelines are verified and running; two more are written and pending verification against the cloud services (see below). Both use the same tests, page objects and locators — only the server URL
 and device capabilities change. That is the point of the Appium abstraction.
 
@@ -221,6 +240,9 @@ are complete pipelines that point the same suite at a cloud Appium hub. Vendor-s
 BrowserStack currently rejects the demo APK at upload (an issue on their side, reported to support),
 and AWS Device Farm is not set up. They are marked as pending rather than working.
 
+A `report` job in the emulator workflow generates the Allure HTML report from the test results and
+publishes it to GitHub Pages on every push to `main`.
+
 Allure results and the Appium server log are uploaded as artifacts with `if: always()` (GitHub
 Actions) and `archiveArtifacts` (Jenkins), so a failed run still leaves a report to read.
 
@@ -230,4 +252,3 @@ Actions) and `archiveArtifacts` (Jenkins), so a failed run still leaves a report
   resolved and a Device Farm project exists.
 - Catalog sort coverage. `SortOption` and `CatalogPage.tap_sort_by()` are implemented but untested.
 - Checkout flow, starting from `CartPage.tap_proceed_to_checkout()`.
-- Publish the Allure report to GitHub Pages from CI.
