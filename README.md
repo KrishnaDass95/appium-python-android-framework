@@ -23,7 +23,7 @@ moving everything target-specific into environment configuration.
 
 ## Overview
 
-Five tests cover login and the product catalog. The point of the project is the framework underneath
+Nine test cases (eight run, one skipped for a known app bug) cover login, the product catalog, sorting and the cart. The point of the project is the framework underneath
 them: a page object layer with no shared state, explicit waits everywhere, config driven entirely by
 environment variables, and test isolation that holds up when a test fails mid-flow.
 
@@ -150,17 +150,15 @@ APPIUM__APP_ACTIVITY=com.saucelabs.mydemoapp.android.view.activities.SplashActiv
 APPIUM__APP_WAIT_ACTIVITY=com.saucelabs.mydemoapp.android.*
 APPIUM__NO_RESET=true
 IMPLICIT_WAIT=10
-AUTO_START_SERVER=false
+AUTO_START_SERVER=true
 ```
 
 `APPIUM__NO_RESET=true` keeps the installed app between sessions, which is what you want locally.
 CI sets it to `false` so every run installs the APK fresh.
 
-Start Appium in its own terminal and leave it running:
-
-```bash
-appium
-```
+With `AUTO_START_SERVER=true`, pytest starts Appium before the first test and stops it after the
+last, so there is nothing else to launch. Set it to `false` if you would rather run `appium` yourself
+in a separate terminal (CI does this). You still need an emulator or device running first.
 
 To install the pre-commit hooks (ruff and mypy run on every commit):
 
@@ -174,7 +172,8 @@ uv run pre-commit install
 uv run pytest                          # everything
 uv run pytest -m smoke                 # smoke only
 uv run pytest -k test_valid_login       # one test
-uv run pytest --collect-only            # should collect 5
+uv run pytest -m regression            # extended coverage (sorting)
+uv run pytest --collect-only            # should collect 9
 ```
 
 Allure results are written on every run — `--alluredir=allure-results --clean-alluredir` is in the
@@ -190,7 +189,7 @@ writes the app package, platform, device and Python version into the report as e
 
 ## Tests
 
-Five tests in `tests/test_shopping.py`, split into `TestAuthentication` and `TestProductCatalog`.
+Nine test cases in `tests/test_shopping.py`, split into `TestAuthentication` and `TestProductCatalog`.
 
 `test_valid_login` logs in as `bob@example.com` and confirms the menu item flipped from "Log In" to
 "Log Out", then logs back out.
@@ -208,8 +207,13 @@ product image rather than its title, since the title is not the tap target.
 cart badge reads three, opens the cart and asserts the row quantity matches. It removes the item in
 `finally`.
 
-The `smoke` marker currently tags the cart test. `regression` is declared and reserved for the
-extended coverage below.
+`test_sort_by_name` and `test_sort_by_price` are parametrised over ascending and descending order,
+so two functions produce four test cases. They compute the expected order from what the app actually
+displays (`sorted(titles, reverse=...)`) instead of hard-coding product names, and assert that more
+than one product was read so an empty list cannot pass vacuously. Prices are parsed from text like
+`$ 29.99` into floats first, because comparing them as strings would sort `"9.99"` after `"29.99"`.
+
+The `smoke` marker tags the cart test; the sort tests carry `regression`.
 
 ## CI
 
@@ -237,7 +241,7 @@ appium, adb — and `ANDROID_HOME` are declared explicitly in the pipeline's env
 **BrowserStack and AWS Device Farm — `Jenkinsfile.browserstack`, `Jenkinsfile.aws-device-farm`**
 are complete pipelines that point the same suite at a cloud Appium hub. Vendor-specific capabilities
 (`bstack:options`) are passed through `APPIUM__EXTRA_CAPS`. Neither has run against its service yet:
-BrowserStack currently rejects the demo APK at upload (an issue on their side, reported to support),
+BrowserStack currently rejects the demo APK at upload (the file itself checks out and their own sample app uploads fine, so this looks like a problem on their side),
 and AWS Device Farm is not set up. They are marked as pending rather than working.
 
 A `report` job in the emulator workflow generates the Allure HTML report from the test results and
@@ -248,7 +252,12 @@ Actions) and `archiveArtifacts` (Jenkins), so a failed run still leaves a report
 
 ## Roadmap
 
-- Verify the BrowserStack and AWS Device Farm pipelines end to end once the APK upload issue is
-  resolved and a Device Farm project exists.
-- Catalog sort coverage. `SortOption` and `CatalogPage.tap_sort_by()` are implemented but untested.
-- Checkout flow, starting from `CartPage.tap_proceed_to_checkout()`.
+Planned, in rough priority order:
+
+- **Verify the cloud pipelines.** Run the BrowserStack and AWS Device Farm Jenkinsfiles end to end
+  once the APK upload issue is resolved and a Device Farm project exists.
+- **More test coverage.** Cart behaviour (remove an item, change quantity and check the total) and
+  the checkout flow, starting from `CartPage.tap_proceed_to_checkout()`.
+- **Allure trend history.** Carry the report's `history/` folder between runs so the published
+  report shows pass-rate and duration trends across builds, not just the latest run.
+- **Scaling notes.** A short section on parallel execution with pytest-xdist and device farms.
