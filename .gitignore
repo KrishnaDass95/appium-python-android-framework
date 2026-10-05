@@ -11,6 +11,16 @@ allure-report/
 # Virtual environments
 .venv
 
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
 # Env files
 .env
 
