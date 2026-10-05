@@ -3,6 +3,7 @@ import contextlib
 import allure
 import pytest
 
+from pages.catalog_page import SortOption
 from tests.base_test import BaseTest
 
 
@@ -78,3 +79,35 @@ class TestProductCatalog(BaseTest):
             with contextlib.suppress(Exception):
                 if cart_page is not None:
                     cart_page.remove_item(0)
+
+    @allure.story("Sort products by name")
+    @allure.severity(allure.severity_level.NORMAL)
+    @pytest.mark.regression
+    @pytest.mark.parametrize(
+        ("option", "descending"),
+        [
+            pytest.param(SortOption.NAME_ASC, False, id="name-asc"),
+            pytest.param(SortOption.NAME_DESC, True, id="name-desc"),
+        ],
+    )
+    def test_sort_by_name(self, catalog_page, option, descending):
+        catalog_page.tap_sort_by(option)
+        titles = catalog_page.get_product_titles()
+        assert len(titles) > 1, "need several products to verify ordering"
+        assert titles == sorted(titles, reverse=descending)
+
+    @allure.story("Sort products by price")
+    @allure.severity(allure.severity_level.NORMAL)
+    @pytest.mark.regression
+    @pytest.mark.parametrize(
+        ("option", "descending"),
+        [
+            pytest.param(SortOption.PRICE_ASC, False, id="price-asc"),
+            pytest.param(SortOption.PRICE_DESC, True, id="price-desc"),
+        ],
+    )
+    def test_sort_by_price(self, catalog_page, option, descending):
+        catalog_page.tap_sort_by(option)
+        prices = catalog_page.get_product_prices()
+        assert len(prices) > 1, "need several products to verify ordering"
+        assert prices == sorted(prices, reverse=descending)

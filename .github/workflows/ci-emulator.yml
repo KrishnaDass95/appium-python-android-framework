@@ -96,21 +96,31 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - uses: actions/download-artifact@v4
+      # If the test job died before uploading results, skip the rest cleanly
+      # instead of failing with a confusing "artifact not found" error.
+      - name: Download Allure results
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@v4
         with:
           name: allure-results-emulator
           path: allure-results
 
       - name: Install Allure CLI
+        if: steps.download.outcome == 'success'
         run: npm install -g allure-commandline
 
       - name: Generate report
+        if: steps.download.outcome == 'success'
         run: allure generate allure-results --clean -o allure-report
 
-      - uses: actions/upload-pages-artifact@v3
+      - name: Package report
+        if: steps.download.outcome == 'success'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: allure-report
 
       - name: Deploy to GitHub Pages
+        if: steps.download.outcome == 'success'
         id: deployment
         uses: actions/deploy-pages@v4

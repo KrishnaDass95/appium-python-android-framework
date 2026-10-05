@@ -1,3 +1,4 @@
+import re
 from enum import Enum
 
 import allure
@@ -20,6 +21,7 @@ class CatalogPage(BasePage):
     _menu_button = id_locator("menuIV")
     _cart_button = id_locator("cartRL")
     _product_titles = id_locator("titleTV")
+    _product_prices = id_locator("priceTV")
     _product_images = id_locator("productIV")
     _login_menu_button = accessibility_locator("Login Menu Item")
     _logout_menu_button = accessibility_locator("Logout Menu Item")
@@ -49,6 +51,12 @@ class CatalogPage(BasePage):
     @allure.step("Get all product titles")
     def get_product_titles(self) -> list[str]:
         return [t.text for t in self.get_elements(self._product_titles)]
+
+    @allure.step("Get all product prices")
+    def get_product_prices(self) -> list[float]:
+        return [
+            float(re.sub(r"[^\d.]", "", p.text)) for p in self.get_elements(self._product_prices)
+        ]
 
     @allure.step("Sort products by {option}")
     def tap_sort_by(self, option: SortOption) -> None:
