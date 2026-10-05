@@ -10,7 +10,7 @@
 
 UI test automation for the [Sauce Labs My Demo App](https://github.com/saucelabs/my-demo-app-android),
 an open-source Android app built as a practice target for mobile automation. The suite drives a real
-emulator or device through Appium 2 and UiAutomator2, produces Allure reports with step-level detail
+emulator or device through Appium 3 and UiAutomator2, produces Allure reports with step-level detail
 and failure screenshots, and runs on every push via GitHub Actions on a headless emulator.
 
 ## Why this project
@@ -32,7 +32,7 @@ environment variables, and test isolation that holds up when a test fails mid-fl
 | | |
 |---|---|
 | Language | Python 3.12 |
-| Automation | Appium 2, UiAutomator2 driver |
+| Automation | Appium 3, UiAutomator2 driver |
 | Client | appium-python-client >= 4.4, selenium >= 4.21 |
 | Test runner | pytest >= 8.3 |
 | Reporting | allure-pytest >= 2.13 |
