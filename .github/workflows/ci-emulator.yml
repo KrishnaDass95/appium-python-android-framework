@@ -106,6 +106,15 @@ jobs:
           name: allure-results-emulator
           path: allure-results
 
+      - name: Restore previous Allure history
+        if: steps.download.outcome == 'success'
+        run: |
+          mkdir -p allure-results/history
+          for f in history.json history-trend.json duration-trend.json retry-trend.json categories-trend.json; do
+            curl -sfL "https://krishnadass95.github.io/appium-python-android-framework/history/$f" \
+              -o "allure-results/history/$f" || rm -f "allure-results/history/$f"
+          done
+
       - name: Install Allure CLI
         if: steps.download.outcome == 'success'
         run: npm install -g allure-commandline
