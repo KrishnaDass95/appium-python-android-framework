@@ -1,3 +1,4 @@
+import contextlib
 import os
 import sys
 from urllib.parse import urlparse
@@ -98,16 +99,27 @@ def reset_to_catalog(driver):
 
 
 # Runs after every test. If the test itself failed (rep_call.failed),
-# captures a screenshot and attaches it to the Allure report.
+# attaches two pieces of evidence to the Allure report:
+#   1. a screenshot (what a human sees)
+#   2. the page source XML (what the UI tree looked like; used by the AI triage tools)
 # tryfirst + hookwrapper in pytest_runtest_makereport (above) ensures
 # rep_call is set before this fixture's teardown reads it.
+# Each capture has its own try/except so a dead driver or a failed screenshot
+# can't raise during teardown or stop the other attachment.
 @pytest.fixture(autouse=True)
 def attach_screenshot_on_failure(request, driver):
     yield
     rep_call = getattr(request.node, "rep_call", None)
     if rep_call and rep_call.failed:
-        allure.attach(
-            driver.get_screenshot_as_png(),
-            name=f"failure-{request.node.name}",
-            attachment_type=allure.attachment_type.PNG,
-        )
+        with contextlib.suppress(Exception):
+            allure.attach(
+                driver.get_screenshot_as_png(),
+                name=f"failure-{request.node.name}",
+                attachment_type=allure.attachment_type.PNG,
+            )
+        with contextlib.suppress(Exception):
+            allure.attach(
+                driver.page_source,
+                name=f"page-source-{request.node.name}",
+                attachment_type=allure.attachment_type.XML,
+            )
