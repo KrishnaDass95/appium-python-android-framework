@@ -84,6 +84,53 @@ jobs:
           name: appium-log-emulator
           path: appium.log
 
+  # Failure triage. Runs only when tests failed.
+  #  - Always: collects evidence (screenshot, page source, report) into one downloadable artifact.
+  #  - Optional: AI triage via the Claude API. Off until the repo variable AI_TRIAGE_ENABLED is
+  #    "true" and the secret ANTHROPIC_API_KEY exists. See "AI-assisted testing" in the README.
+  #    Fork PRs get no secrets; the script then skips cleanly.
+  triage:
+    needs: test
+    if: always() && needs.test.result == 'failure'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Download Allure results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-emulator
+          path: allure-results
+        continue-on-error: true
+
+      - name: Install dependencies (includes the optional ai group)
+        run: uv sync --group ai
+
+      # Exit code 1 means "failures found" (expected here); anything else is a real error.
+      - name: Collect failure evidence
+        run: uv run python -m ai.evidence || [ $? -eq 1 ]
+
+      - name: AI triage (optional)
+        if: vars.AI_TRIAGE_ENABLED == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: uv run python -m ai.triage_api
+
+      - name: Upload failure evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-evidence
+          path: scratch/triage/
+          if-no-files-found: ignore
+
   report:
     needs: test
     if: always() && github.ref == 'refs/heads/main'

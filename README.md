@@ -250,6 +250,30 @@ publishes it to GitHub Pages on every push to `main`.
 Allure results and the Appium server log are uploaded as artifacts with `if: always()` (GitHub
 Actions) and `archiveArtifacts` (Jenkins), so a failed run still leaves a report to read.
 
+## AI-assisted testing
+
+AI is used to explain failures, not to decide or to change code. Everything it produces is advisory and goes through a human.
+
+| Piece | Status | What it does |
+|---|---|---|
+| Failure evidence on test failure | Working | On a failed test, `tests/conftest.py` attaches the screenshot and the page source (UI tree XML) to the Allure results. |
+| `ai/evidence.py` | Working | Collects failures from `allure-results/` into `scratch/triage/`: `REPORT.md` (error, traceback, steps, git commit and uncommitted diff), plus the screenshot and page source. Secrets are redacted. |
+| `/triage` (Claude Code command) | Working, experimental | In Claude Code, run `/triage` after a failed run. It reads the evidence and the page objects, and writes a verdict, evidence, suggested fix and confidence to `scratch/triage/TRIAGE.md`. |
+| `ai/triage_api.py` | Built, **not yet run against the API** | Same idea through the Claude API so it can run in CI. Needs `ANTHROPIC_API_KEY`. Off by default. |
+| CI `triage` job | Added, **not yet run on GitHub**; AI step off by default | On a failed run, uploads a `failure-evidence` artifact. The AI step runs only when the repo variable `AI_TRIAGE_ENABLED` is `true` and the secret `ANTHROPIC_API_KEY` is set. |
+
+Try it: break a locator in `pages/`, run one test, then run `uv run python -m ai.evidence` (or `/triage` in Claude Code). A real sample is in [ai/examples/renamed-sort-locator/](ai/examples/renamed-sort-locator/).
+
+Unit tests for the tooling need no device or key: `uv run pytest -o addopts="" ai/tests`. The `-o addopts=""` matters because the project's pytest options include `--clean-alluredir`, which would wipe your real results.
+
+### Limits
+- The AI reads evidence from one run. It can misjudge flaky or intermittent failures, so rerun before trusting a verdict.
+- It only sees what was captured. Failures during fixture setup are not captured yet, and there is no logcat.
+- A verdict is a hint. A human decides whether it is an app bug, a locator problem or a test problem.
+- Nothing AI-generated is applied automatically. Suggested fixes are applied by a person, through the normal PR review.
+- `ai/triage_api.py` sends the redacted report and page source (not screenshots) to Anthropic. Check that fits your data policy before enabling it in CI. Fork PRs get no secrets, so it skips there.
+- The optional dependency lives in its own group: `uv sync --group ai`.
+
 ## Roadmap
 
 Planned, in rough priority order:
