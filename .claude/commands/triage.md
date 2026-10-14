@@ -2,7 +2,7 @@
 description: Triage failed Appium tests from the last run using collected evidence
 ---
 
-Triage the failures from the last test run. This is read-only analysis: do not edit any files.
+Triage the failures from the last test run. This is analysis only: do not edit source, tests or config. The one file you may write is `scratch/triage/TRIAGE.md`, containing your answer, so the verdict is saved next to the evidence.
 
 1. Run `uv run python -m ai.evidence`. It copies failure evidence from `allure-results/` into `scratch/triage/` and writes `scratch/triage/REPORT.md`. If it says nothing failed, stop and say so.
 2. Read `scratch/triage/REPORT.md`. For each failed test, also read its evidence files in `scratch/triage/<test>/`: the screenshot (PNG) and the page source (XML).

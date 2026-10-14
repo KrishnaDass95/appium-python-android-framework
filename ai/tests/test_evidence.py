@@ -76,6 +76,25 @@ def test_container_attachments_are_found_and_copied(tmp_path: Path) -> None:
     assert (out / "test_broken" / "page-source-test_broken.xml").read_text() == "<hierarchy/>"
 
 
+def test_text_attachments_are_redacted_when_copied(tmp_path: Path) -> None:
+    results = _make_results(tmp_path)
+    (results / "log.txt").write_text("I/App: login ok token=abc123secret")
+    _write(
+        results / "d-container.json",
+        {
+            "children": ["u1"],
+            "afters": [
+                {"attachments": [{"name": "logcat-x", "source": "log.txt", "type": "text"}]}
+            ],
+        },
+    )
+    out = tmp_path / "out"
+    write_report(load_failures(results), results, out)
+    copied = (out / "test_broken" / "logcat-x.txt").read_text()
+    assert "abc123secret" not in copied
+    assert "login ok" in copied
+
+
 def test_redact_handles_api_keys_and_bearer_tokens() -> None:
     assert "sk-ant-abc123" not in redact("key sk-ant-abc123 here")
     assert "abcdefghijklmnop" not in redact("Authorization: Bearer abcdefghijklmnop")

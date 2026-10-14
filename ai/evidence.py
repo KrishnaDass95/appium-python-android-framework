@@ -12,6 +12,7 @@ import argparse
 import json
 import re
 import shutil
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -108,9 +109,36 @@ def _safe(name: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", name).strip("_")
 
 
+def _git(*args: str) -> str:
+    try:
+        done = subprocess.run(["git", *args], capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    return done.stdout.strip() if done.returncode == 0 else ""
+
+
+def source_state() -> list[str]:
+    """Which code the tests ran against: commit plus any uncommitted changes.
+
+    Measured when the report is built, so collect right after the run. Without this a
+    triage reads today's source and can disagree with what actually ran.
+    """
+    commit = _git("rev-parse", "--short", "HEAD") or "unknown"
+    changed = _git("status", "--porcelain", "--", "pages", "tests", "config")
+    lines = ["## Source state", f"- commit: `{commit}`"]
+    if changed:
+        diff = _git("diff", "--unified=0", "--", "pages", "tests", "config")
+        lines += ["- uncommitted changes in pages/tests/config:", "```", changed, "```"]
+        if diff:
+            lines += ["```diff", redact(diff[:4000]), "```"]
+    else:
+        lines.append("- working tree clean for pages/tests/config")
+    return [*lines, ""]
+
+
 def write_report(failures: list[Failure], results_dir: Path, out_dir: Path) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
-    lines = [f"# Failure evidence ({len(failures)} failed)", ""]
+    lines = [f"# Failure evidence ({len(failures)} failed)", "", *source_state()]
     for failure in failures:
         test_dir = out_dir / _safe(failure.name)
         test_dir.mkdir(exist_ok=True)
@@ -120,7 +148,11 @@ def write_report(failures: list[Failure], results_dir: Path, out_dir: Path) -> P
             if att.source and src.exists():
                 suffix = src.suffix or ".bin"
                 dest = test_dir / f"{_safe(att.name) or 'attachment'}{suffix}"
-                shutil.copy(src, dest)
+                if suffix == ".txt":
+                    # Logs (logcat, pytest output) can leak secrets, so redact on the way out.
+                    dest.write_text(redact(src.read_text(errors="replace")))
+                else:
+                    shutil.copy(src, dest)
                 copied.append(dest.relative_to(out_dir))
         lines += [
             f"## {failure.name}",
