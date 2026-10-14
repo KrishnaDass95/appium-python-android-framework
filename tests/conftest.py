@@ -90,6 +90,10 @@ def product_detail_page(driver) -> ProductPage:
 # Swallowed silently — if reset fails we still want the next test to attempt.
 @pytest.fixture(autouse=True)
 def reset_to_catalog(driver):
+    # Appium buffers logcat across the whole session. Reading it once here drains the
+    # buffer, so the failure capture below only holds this test's lines (restart included).
+    with contextlib.suppress(Exception):
+        driver.get_log("logcat")
     try:
         driver.terminate_app("com.saucelabs.mydemoapp.android")
         driver.activate_app("com.saucelabs.mydemoapp.android")
@@ -98,10 +102,22 @@ def reset_to_catalog(driver):
     yield
 
 
+LOGCAT_MAX_LINES = 400
+
+
+def _format_logcat(entries: list[dict], limit: int = LOGCAT_MAX_LINES) -> str:
+    """Last `limit` logcat entries as 'time level message' lines (Appium get_log format)."""
+    lines = [f"{e.get('timestamp')} {e.get('level')} {e.get('message')}" for e in entries]
+    shown = lines[-limit:]
+    header = f"# last {len(shown)} of {len(lines)} logcat lines\n"
+    return header + "\n".join(shown)
+
+
 # Runs after every test. If the test itself failed (rep_call.failed),
-# attaches two pieces of evidence to the Allure report:
+# attaches evidence to the Allure report:
 #   1. a screenshot (what a human sees)
 #   2. the page source XML (what the UI tree looked like; used by the AI triage tools)
+#   3. the tail of logcat (what the app and OS were doing: crashes, ANRs, errors)
 # tryfirst + hookwrapper in pytest_runtest_makereport (above) ensures
 # rep_call is set before this fixture's teardown reads it.
 # Each capture has its own try/except so a dead driver or a failed screenshot
@@ -122,4 +138,10 @@ def attach_screenshot_on_failure(request, driver):
                 driver.page_source,
                 name=f"page-source-{request.node.name}",
                 attachment_type=allure.attachment_type.XML,
+            )
+        with contextlib.suppress(Exception):
+            allure.attach(
+                _format_logcat(driver.get_log("logcat")),
+                name=f"logcat-{request.node.name}",
+                attachment_type=allure.attachment_type.TEXT,
             )
